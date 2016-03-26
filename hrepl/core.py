@@ -140,6 +140,3 @@ def main(address='127.0.0.1', port=8080, protocol='HTTP/1.0'):
     print 'HREPL on ', sa[0], 'port', sa[1]
     httpd.serve_forever()
     #TODO consider threaded so can launch from ipy console?
-
-if __name__ == '__main__':
-    main()
