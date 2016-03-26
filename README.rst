@@ -29,7 +29,9 @@ use
 ---
 
 Fire up the hrepl however you like, e.g.  ``python -m hrepl``
-and open a Python file in Vim. Now fire away!
+and open a Python file in Vim. ``<F9>`` sends the paragraph under
+the cursor, ``K`` gets documentation for ``<cword>``, etc. Read
+``ftplugin/python.vim`` to see what's up. (Re)map according to taste.
 
 missing
 -------
