@@ -5,6 +5,8 @@ server correctly based on arguments.
 
 """
 
+import sys
+
 from .core import main
 
-main()
+main(pg='--pg' in sys.argv)

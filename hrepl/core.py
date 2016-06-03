@@ -44,7 +44,7 @@ def dedent(src):
     leftmostcol = 1000
     lines = src.split('\n')
     for l in lines:
-        if file(): # i.e. ignore empty lines
+        if l.strip(): # i.e. ignore empty lines
             start = re.search(r'\S', l).start()
             if start < leftmostcol:
                 leftmostcol = start
@@ -107,7 +107,7 @@ class HREPL(BaseHTTPServer.BaseHTTPRequestHandler):
             base = ''
             keys = globals().keys()
         return ','.join('%s%s' % (base, k) for k in keys if k.startswith(name))
-    
+
     def do_describe(self, message=[], **kwds):
         name = message[0]
         g = globals()
@@ -124,7 +124,6 @@ class HREPL(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             return repr(obj)[:80]
 
-        
 @atexit.register
 def close_temp_files():
     for f in exec_temp_files:
@@ -133,10 +132,17 @@ def close_temp_files():
         except Exception as e:
             print e
 
-def main(address='127.0.0.1', port=8080, protocol='HTTP/1.0'):
+
+def main(address='127.0.0.1', port=8080, protocol='HTTP/1.0', pg=False):
+    if pg:
+        import pyqtgraph
+        app = pyqtgraph.mkQApp()
     HREPL.protocol_version = protocol
     httpd = BaseHTTPServer.HTTPServer((address, port), HREPL)
+    httpd.timeout = 0.01
     sa = httpd.socket.getsockname()
     print 'HREPL on ', sa[0], 'port', sa[1]
-    httpd.serve_forever()
-    #TODO consider threaded so can launch from ipy console?
+    while True:
+        httpd.handle_request()
+        if pg:
+            app.processEvents()
