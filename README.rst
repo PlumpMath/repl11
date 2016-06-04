@@ -41,9 +41,14 @@ missing
 - correct translation of tracebacks to quickfixlist (buggy implementation
   thereof is already in place)
 - line profiling blocks of code (get wrapped in @profiled defs)
-- correct threading for IPython as well as Qt
 - embedding into running application
 - eval/exev within specific module a la clojure
+- logging of session
+- open definition, show source, etc.
+- repl config : which interpreter, pythonpath, cwd, venv etc. 
+- start repl from vim's python in subprocess
+- auto deep reloading
+- complete available modules
 
 
 .. _tmux: http://tmux.sourceforge.net

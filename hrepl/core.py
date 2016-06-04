@@ -4,28 +4,33 @@ import os
 import ast
 import sys
 import atexit
+import logging
+import urlparse
 import tempfile
 import traceback
-from urlparse import urlparse, parse_qs
 import BaseHTTPServer
+
+LOG = logging.getLogger(__name__)
 
 try:
     from cStringIO import StringIO
+    LOG.debug('using C StringIO')
 except:
     from StringIO import StringIO
+    LOG.debug('using pure-Python StringIO')
 
 try:
     import numpy
     isarray = lambda o: isinstance(o, numpy.ndarray)
+    LOG.debug('numpy available')
 except ImportError:
     isarray = lambda o: False
+    LOG.debug('numpy not available')
 
 class LineOffsetter(ast.NodeVisitor):
     "Offsets lineno fields in an AST node"
-
     def __init__(self, lineinc):
         self.lineinc = lineinc
-
     def generic_visit(self, node):
         super(LineOffsetter, self).generic_visit(node)
         if hasattr(node, 'lineno'):
@@ -37,7 +42,7 @@ def compiled_with_info(src, lineinc, filename, mode):
     LineOffsetter(lineinc).visit(code)
     return compile(code, filename, mode)
 
-exec_temp_files = []
+EXEC_TEMP_FILES = []
 
 def dedent(src):
     "Unindent a block of code"
@@ -58,8 +63,8 @@ class Snippet(object):
 class HREPL(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_GET(self):
-        pr = urlparse(self.path)
-        qd = parse_qs(pr.query, keep_blank_values=True, strict_parsing=True)
+        pr = urlparse.urlparse(self.path)
+        qd = urlparse.parse_qs(pr.query, keep_blank_values=True, strict_parsing=True)
         target = getattr(self, 'do_' + '_'.join(pr.path[1:].split('/')), None)
         if target is None:
             return self.send_response(404)
@@ -80,7 +85,7 @@ class HREPL(BaseHTTPServer.BaseHTTPRequestHandler):
             except SyntaxError:
                 # TODO have Vim send us file & line numbers instead of using a temp file
                 f = tempfile.NamedTemporaryFile(suffix='.py', delete=False)
-                exec_temp_files.append(f)
+                EXEC_TEMP_FILES.append(f)
                 f.write(dedent(src))
                 f.close()
                 execfile(f.name, globals())
@@ -126,7 +131,7 @@ class HREPL(BaseHTTPServer.BaseHTTPRequestHandler):
 
 @atexit.register
 def close_temp_files():
-    for f in exec_temp_files:
+    for f in EXEC_TEMP_FILES:
         try:
             os.unlink(f.name)
         except Exception as e:
