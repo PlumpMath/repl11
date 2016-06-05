@@ -5,20 +5,21 @@ import ast
 import sys
 import atexit
 import logging
-import urlparse
 import tempfile
 import traceback
-import BaseHTTPServer
+
+try:
+    import BaseHTTPServer
+    import urlparse
+    from StringIO import StringIO
+except:
+    import http.server as BaseHTTPServer
+    import urllib.parse as urlparse
+    from io import StringIO
 
 LOG = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
-try:
-    from cStringIO import StringIO
-    LOG.debug('using C StringIO')
-except:
-    from StringIO import StringIO
-    LOG.debug('using pure-Python StringIO')
 
 try:
     import numpy
@@ -82,7 +83,7 @@ class HREPL(BaseHTTPServer.BaseHTTPRequestHandler):
         sys.stdout = sys.stderr = sio
         try:
             try:
-                print repr(eval(src, globals()))
+                pprint.pprint(eval(src, globals()))
             except SyntaxError:
                 # TODO have Vim send us file & line numbers instead of using a temp file
                 f = tempfile.NamedTemporaryFile(suffix='.py', delete=False)
@@ -107,7 +108,7 @@ class HREPL(BaseHTTPServer.BaseHTTPRequestHandler):
             try:
                 keys = dir(eval(base, globals()))
             except Exception as e:
-                print 'completion failed', e
+                LOG.info('completion failed %r', e)
                 return ''
             base += '.'
         else:
@@ -137,7 +138,7 @@ def close_temp_files():
         try:
             os.unlink(f.name)
         except Exception as e:
-            print e
+            LOG.exception(e)
 
 
 def main(address='127.0.0.1', port=8080, protocol='HTTP/1.0', pg=False):
@@ -147,8 +148,7 @@ def main(address='127.0.0.1', port=8080, protocol='HTTP/1.0', pg=False):
     HREPL.protocol_version = protocol
     httpd = BaseHTTPServer.HTTPServer((address, port), HREPL)
     httpd.timeout = 0.01
-    sa = httpd.socket.getsockname()
-    print 'HREPL on ', sa[0], 'port', sa[1]
+    LOG.info('HREPL on %s:%d', *httpd.socket.getsockname())
     while True:
         httpd.handle_request()
         if pg:
