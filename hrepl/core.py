@@ -11,6 +11,7 @@ import traceback
 import BaseHTTPServer
 
 LOG = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 try:
     from cStringIO import StringIO
@@ -71,11 +72,11 @@ class HREPL(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(target(**qd))
-    
+
     def do_ex(self, message=[], **kwds):
         src = message[0]
-        print src
-        print repr(src)
+        for i, line in enumerate(src.split('\n')):
+            LOG.info('ex source %02d  %s', i, line)
         out, err = sys.stdout, sys.stderr
         sio = StringIO()
         sys.stdout = sys.stderr = sio
@@ -85,16 +86,17 @@ class HREPL(BaseHTTPServer.BaseHTTPRequestHandler):
             except SyntaxError:
                 # TODO have Vim send us file & line numbers instead of using a temp file
                 f = tempfile.NamedTemporaryFile(suffix='.py', delete=False)
+                LOG.debug('new temp file %r', f)
                 EXEC_TEMP_FILES.append(f)
                 f.write(dedent(src))
                 f.close()
                 execfile(f.name, globals())
         except Exception as e:
-            print e
+            LOG.exception(e)
             traceback.print_exc(e)
         sys.stdout, sys.stderr = out, err
         output = sio.getvalue()
-        print 'output = ', repr(output)
+        LOG.info(repr(output))
         return output
 
     def do_complete(self, message=[], **kwds):
