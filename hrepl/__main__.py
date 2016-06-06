@@ -6,6 +6,10 @@ server correctly based on arguments.
 """
 
 import sys
+import logging
+
+logging.basicConfig(
+    level=logging.DEBUG if '-v' in sys.argv else logging.INFO)
 
 from .core import main
 

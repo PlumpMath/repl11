@@ -10,7 +10,7 @@ requiring only Vim w/ Python and a Python with stdlib (so PyPy, Jython
 should work in principle).
 
 This is motivated by needing to work on Windows (bye tmux_, tslime_) and
-even when not using IPython/ZMQ (bye vim-ipython_)
+even when not using IPython/ZMQ (bye vim-ipython_).
 This is currently specific to Vim and Python, but in principle can be
 extended to any combination of server & client.
 
@@ -49,6 +49,21 @@ missing
 - start repl from vim's python in subprocess
 - auto deep reloading
 - complete available modules
+
+- cover as much as possible with tests.. 
+- monkey patching methods & functions: find class and objects, ... 
+- implement js/codemirror & vim clients as demos
+- read pdb sources to see how to set trace, etc. 
+- subexpression profiling
+- writing at class level in coordination with tests: for given
+  cursor position, find list of tests that cover this branch or
+  comes closest
+- "static view" of stack when not debugging to quickfixlist
+- for dynamic, visual debugging, code needs to run in separate thread
+  so we can interact, poke, evaluate expressions, etc. 
+
+- instead of using temporary files, try to use exec simply, especially 
+  if client can provide file and location
 
 
 .. _tmux: http://tmux.sourceforge.net
