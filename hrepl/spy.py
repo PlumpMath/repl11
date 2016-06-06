@@ -1,7 +1,13 @@
 
+"Implments instrospection utilities"
+
 import os
 import sys
 import logging
+
+# much fun to be had here, not just completion..
+import inspect
+import symtable
 
 LOG = logging.getLogger(__name__)
 
