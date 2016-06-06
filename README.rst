@@ -42,12 +42,11 @@ missing
   thereof is already in place)
 - line profiling blocks of code (get wrapped in @profiled defs)
 - embedding into running application
-- eval/exev within specific module a la clojure
+- eval/exev within specific module a la clojure based on current file
 - logging of session
 - open definition, show source, etc.
 - repl config : which interpreter, pythonpath, cwd, venv etc. 
 - start repl from vim's python in subprocess
-- auto deep reloading
 - complete available modules
 
 - cover as much as possible with tests.. 
@@ -62,8 +61,16 @@ missing
 - for dynamic, visual debugging, code needs to run in separate thread
   so we can interact, poke, evaluate expressions, etc. 
 
-- instead of using temporary files, try to use exec simply, especially 
-  if client can provide file and location
+- need some serious reloading support 
+  - intercept imports
+  - intercept class & function definitions
+  - intercept references to functions, classes & methods
+  - instrument change propagation
+
+- optional repl manager: controls subprocesses so crash doesn't knock out
+  server, and server runs independently. need to build basic server first
+
+
 
 
 .. _tmux: http://tmux.sourceforge.net

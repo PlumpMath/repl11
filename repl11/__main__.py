@@ -6,6 +6,10 @@ server correctly based on arguments.
 """
 
 import sys
+import argparse
+
+parser = argparse.ArgumentParse(description='repl11')
+
 import logging
 
 logging.basicConfig(
