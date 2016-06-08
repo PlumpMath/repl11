@@ -3,6 +3,7 @@
 
 import os
 import sys
+import types
 import logging
 
 # much fun to be had here, not just completion..
@@ -47,3 +48,34 @@ def modules_in_path():
                 continue
             modules.append(module_name)
     return modules
+
+def modname_from_path(path):
+    "Guess a module from path"
+    filename = os.path.abspath(path)
+    found = False
+    for path in sys.path:
+        apath = os.path.abspath(path)
+        if filename.startswith(apath):
+            found = True
+            break
+    if found:
+        dirname = os.path.dirname(filename)
+        reldir = dirname.split(apath + os.path.sep)[1]
+        basename = os.path.basename(filename)
+        basemod = basename.split('.py')[0]
+        return reldir.replace(os.path.sep, '.') + '.' + basemod
+    return filename
+
+
+def get_module(key):
+    if key not in sys.modules:
+        LOG.debug('%r not in sys.modules', key)
+        sys.modules[key] = types.ModuleType(key)
+    mod = sys.modules[key]
+    LOG.debug('found for %r module %r', key, mod)
+    return mod
+
+def module_from_path(path):
+    guess = modname_from_path(path)
+    LOG.debug('guess modname %r from path %r', guess, path)
+    return get_module(guess)

@@ -9,9 +9,8 @@ from BaseHTTPServer import (
         HTTPServer as Server
     )
 
-from . import code, ns
+from . import code, spy
 
-NS = ns.Namespaces()
 
 class Handler(BaseHTTPRequestHandler):
 
@@ -43,10 +42,9 @@ class Handler(BaseHTTPRequestHandler):
         self.log.debug('kwds %r', kwds)
         lineno = int(kwds['lineno'][0]) - 1
         filename = kwds['filename'][0]
-        # TODO namespace handling
-        reload(code)
-        reload(ns)
-        result = code.Code(src, filename, lineno)(NS['default'])
+        self.log.debug('running in namespace %r', filename)
+        mod = spy.module_from_path(filename)
+        result = code.Code(src, filename, lineno)(mod)
         if 'result' in result:
             result['result'] = pprint.pformat(result['result'])
         js = json.dumps(result)
@@ -56,23 +54,26 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_complete(self, message=[], **kwds):
         name = message[0]
+        filename = kwds['filename'][0]
+        self.log.debug('completing in ns %r on %r', filename, name)
+        mod = spy.module_from_path(filename)
         if '.' in name:
             parts = name.split('.')
             base, name = '.'.join(parts[:-1]), parts[-1]
             try:
-                keys = dir(eval(base, NS['default']))
+                keys = dir(eval(base, mod.__dict__))
             except Exception as e:
-                LOG.info('completion failed %r', e)
+                self.log.info('completion failed %r', e)
                 return ''
             base += '.'
         else:
             base = ''
-            keys = NS['default'].keys()
+            keys = mod.__dict__.keys()
         return ','.join('%s%s' % (base, k) for k in keys if k.startswith(name))
 
     def do_describe(self, message=[], **kwds):
         name = message[0]
-        g = NS['default']
+        g = spy.module_from_path(filename).__dict__
         if name == 'whos':
             return '\n'.join('%-30s %s' % (k, type(g[k]))
                              for k in sorted(g.keys())

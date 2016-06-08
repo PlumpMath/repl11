@@ -71,6 +71,10 @@ missing
   server, and server runs independently. need to build basic server first
 
 
+- snapshot stacks static (traceback.extract_stack) and dynamically?
+- hybrid debugging: stack with locals' reprs. 
+- keep tag list updated with modules, functions, etc. 
+
 
 
 .. _tmux: http://tmux.sourceforge.net

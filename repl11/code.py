@@ -71,6 +71,7 @@ class Code(object):
 
     def __init__(self, source, filename=nofile, lineno=noline):
         self.source   = dedent(source)
+        # from here, determine module, cache result
         self.filename = filename
         self.lineno   = lineno
         self.log = logging.getLogger(repr(self))
@@ -89,8 +90,10 @@ class Code(object):
             self.log.warning('compilation failed: %r', exc)
             self.obj = exc
 
-    def __call__(self, namespace):
-        "Run code in namespace"
+    def __call__(self, module):
+        "Run code in module"
+
+        ns = module.__dict__
 
         fail = lambda tb, exc, out: {
                  'status'   : 'fail'
@@ -106,10 +109,10 @@ class Code(object):
         else:
             try:
                 with IOCapture() as io:
-                    exec self.obj in namespace
+                    exec self.obj in ns
                 ret = {'status': 'ok'
                       ,'out'   : io.contents
-                      ,'result': namespace[self.lastkey] 
+                      ,'result': ns[self.lastkey] 
                                  if self.lastexpr else None
                       }
 

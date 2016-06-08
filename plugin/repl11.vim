@@ -59,7 +59,10 @@ function! R11Complete(findstart, base)
 python<<EOF
 import vim
 from urllib import urlopen, urlencode
-message = urlencode({'message': vim.eval('a:base')})
+message = urlencode(
+    {'message': vim.eval('a:base')
+    ,'filename': vim.eval("expand('%:p')") # to know which namespace
+    })
 req = urlopen('http://127.0.0.1:8080/complete?{0}'.format(message))
 vim.command('let b:hrepl_resp = %r' % (req.read().strip(), ))
 EOF
