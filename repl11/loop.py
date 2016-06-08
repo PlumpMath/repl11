@@ -32,16 +32,8 @@ class BaseLoop(object):
 class PGLoop(BaseLoop):
     "Integrates processing PyQtGraph events"
 
-    def __init__(self, qt=None, **kwds):
-        super(PGLoop, self).__init__(**kwds)
-        self.qt = qt
-
     def setup(self):
         super(PGLoop, self).setup()
-        if self.qt == 'pyqt':
-            import PyQt
-        elif self.qt == 'pyside':
-            import PySide
         import pyqtgraph as pg
         self.app = pg.mkQApp()
         self.log.info('PG QtApp successfully created %r', self.app)

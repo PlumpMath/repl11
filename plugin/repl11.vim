@@ -115,10 +115,9 @@ endfunction
 function! R11Begin()
 python<<EOF
 import subprocess
-try:
-    r11proc
-except:
-    r11proc = subprocess.Popen(['python', '-m', 'repl11', '-v', '-p', '8080'])
+r11proc = subprocess.Popen(['python', '-m', 'repl11', '-v', '-p', '8080', '-l', 'pg'], 
+	stdout=subprocess.PIPE, 
+	stderr=subprocess.PIPE)
 EOF
 endfunction
 
@@ -128,6 +127,15 @@ try:
     r11proc.terminate()
 except:
     pass
+
+EOF
+endfunction
+
+function! R11Status()
+python<<EOF
+if r11proc.poll():
+    print r11proc.stdout.read()
+    print r11proc.stderr.read()
 EOF
 endfunction
 
@@ -145,7 +153,8 @@ map <c-j> :call R11DescribeCword()<cr><c-p>
 map \rl :call R11Log()<cr>
 map \rb :call R11Begin()<cr>
 map \re :call R11End()<cr>
-map \re \re\rb
+map \rs :call R11Status()<cr>
+map \rr \re\rb
 
 "map <F5> :w<CR>:call R11Send('ex', 'execfile("' . expand('%') . '", globals())')
 
