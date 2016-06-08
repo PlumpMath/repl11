@@ -112,6 +112,24 @@ for t, line in records:
 EOF
 endfunction
 
+function! R11Begin()
+python<<EOF
+import subprocess
+try:
+    r11proc
+except:
+    r11proc = subprocess.Popen(['python', '-m', 'repl11', '-v', '-p', '8080'])
+EOF
+endfunction
+
+function! R11End()
+python<<EOF
+try:
+    r11proc.terminate()
+except:
+    pass
+EOF
+endfunction
 
 map <c-p> :echo g:r11out<CR>
 
@@ -125,6 +143,9 @@ map <c-k> :call R11Source()<cr><c-p>
 map <c-j> :call R11DescribeCword()<cr><c-p>
 
 map \rl :call R11Log()<cr>
+map \rb :call R11Begin()<cr>
+map \re :call R11End()<cr>
+map \re \re\rb
 
 "map <F5> :w<CR>:call R11Send('ex', 'execfile("' . expand('%') . '", globals())')
 
