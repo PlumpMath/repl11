@@ -40,10 +40,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_ex(self, message=[], **kwds):
         src = message[0]
+        self.log.debug('kwds %r', kwds)
+        lineno = int(kwds['lineno'][0]) - 1
+        filename = kwds['filename'][0]
         # TODO namespace handling
         reload(code)
         reload(ns)
-        result = code.Code(src)(NS['default'])
+        result = code.Code(src, filename, lineno)(NS['default'])
         if 'result' in result:
             result['result'] = pprint.pformat(result['result'])
         js = json.dumps(result)

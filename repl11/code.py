@@ -92,14 +92,16 @@ class Code(object):
     def __call__(self, namespace):
         "Run code in namespace"
 
-        fail = lambda tb, exc: {'status'   : 'fail'
-                               ,'traceback': tb
-                               ,'result': exc
-                               }
+        fail = lambda tb, exc, out: {
+                 'status'   : 'fail'
+                ,'traceback': tb
+                ,'result': exc
+                ,'out': out
+                }
 
         if isinstance(self.obj, Exception):
             self.log.warning('compilation failure')
-            ret = fail([], self.obj)
+            ret = fail([], self.obj, '')
 
         else:
             try:
@@ -113,7 +115,7 @@ class Code(object):
 
             except Exception as exc:
                 _, _, tb = sys.exc_info()
-                ret = fail(traceback.extract_tb(tb), exc)
+                ret = fail(traceback.extract_tb(tb), exc, io.contents)
                 self.log.debug(pprint.pformat(ret['traceback']))
                 self.log.warning('execution exception %r', exc)
 

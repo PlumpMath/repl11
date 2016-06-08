@@ -6,8 +6,11 @@ python<<EOF
 import vim, json, urllib
 target  = vim.eval('a:target')
 message = vim.eval('a:message')
-# TODO add current file name to spec namespace
-pars = {'message': message}
+row, col = vim.current.window.cursor
+pars = {'message': message
+       ,'filename': vim.eval("expand('%:p')")
+       ,'lineno': row
+       }
 message = urllib.urlencode(pars)
 req = urllib.urlopen('http://127.0.0.1:8080/{0}?{1}'.format(target, message))
 resp = json.loads(req.read())
@@ -22,14 +25,17 @@ if resp['status'] in ('ok', 'fail'):
         out = resp['status']
     vim.vars['r11out'] = out
     #vim.command('let g:r11out = %r' % (out,))
-    if False:
-        vim.command('let g:r11qfl = []')
+    if resp['status'] == 'fail':
+	qfl = []
         for filename, lineno, context, text in resp['traceback']:
-            vim.command('call add(g:r11qfl, %s)' % repr({
-                    'text'     : text,
-                    'filename' : filename,
-                    'lnum'     : lineno
-                }))
+	    if filename.endswith('repl11/code.py'):
+		continue
+	    qfl.append({
+	        'text'     : text or '',
+	        'filename' : filename,
+	        'lnum'     : lineno
+	    })
+        vim.vars['r11qfl'] = vim.List(qfl)
         vim.command('call setqflist(g:r11qfl)')
 else:
     print 'unknown response status', resp['status']
@@ -88,19 +94,16 @@ function!R11Source()
 endfunction
 
 
-
 map <c-p> :echo g:r11out<CR>
 
 vmap <c-s> "ry:call R11Send('ex', @r)<cr>
 nmap <c-s> mtvip<c-s>`t<c-p>
-imap <c-s> <esc><c-s>a
+imap <c-s> <esc><c-s>
 
 map K :call R11Help()<cr><c-p>
 map <c-k> :call R11Source()<cr><c-p>
 "map <c-w> :call R11Send('describe', 'whos')<cr><c-p>
 map <c-j> :call R11DescribeCword()<cr><c-p>
-
-
 
 
 "map <F5> :w<CR>:call R11Send('ex', 'execfile("' . expand('%') . '", globals())')
