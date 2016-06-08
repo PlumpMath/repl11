@@ -2,6 +2,7 @@
 "repl11 cli"
 
 import sys
+import logging
 import argparse
 
 
@@ -19,6 +20,22 @@ verbosity.add_argument(
         '--quiet', 
         action='store_true',
         help='Decrease verbosity (log level from INFO to WARNING)')
+
+args, _ = parser.parse_known_args()
+
+if args.quiet:
+    loglevel = logging.WARNING
+elif args.verbose:
+    loglevel = logging.DEBUG
+else:
+    loglevel = logging.INFO
+
+from . import log
+
+log.setup_logging(loglevel)
+
+LOG = logging.getLogger(__name__)
+LOG.info('logging system setup')
 
 from . import loop
 
@@ -44,18 +61,6 @@ parser.add_argument(
 
 
 args = parser.parse_args()
-
-import logging
-if args.quiet:
-    loglevel = logging.WARNING
-elif args.verbose:
-    loglevel = logging.DEBUG
-else:
-    loglevel = logging.INFO
-logging.basicConfig(level=loglevel)
-
-
-LOG = logging.getLogger(__name__)
 LOG.info('starting with args %r', args)
 
 MainLoop = loop.available[args.loop]

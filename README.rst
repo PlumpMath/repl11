@@ -34,6 +34,25 @@ the cursor, ``K`` gets documentation for ``<cword>``, etc.
 ``<c-x><c-u>`` completes. Read
 ``ftplugin/python.vim`` to see what's up. (Re)map according to taste.
 
+recently implemented
+--------------------
+
+- standard library only, only requires http server and urllib
+  for RPC.
+
+- tracebacks are converted into Vim's quickfixlist for both installed
+  modules and scratch files, making it easy to jump to relevant code
+
+- exec performed on a per-file module basis: where a filename has a 
+  mapping to a Python module (for the running interpreter), the existing
+  module is used, otherwise a fake module is created. This allows live
+  updating of modules attributes
+
+- auto dedent makes it easier to write & test code in indented blocks
+
+- logging now handling through http api, client can display as 
+  desired, and interpreter can run in background, no terminal requried
+
 missing
 -------
 

@@ -9,7 +9,7 @@ from BaseHTTPServer import (
         HTTPServer as Server
     )
 
-from . import code, spy
+from . import code, spy, log
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -86,4 +86,11 @@ class Handler(BaseHTTPRequestHandler):
             return '%s %r' % (obj.dtype.name, obj.shape)
         else:
             return repr(obj)[:80]
+
+    def do_log(self, since=[], **kwds):
+        "Retrieve log contents"
+        t = float(since[0]) if since[0] else 0.0
+        return json.dumps(log.CFG['stream'].since(t))
+
+
 

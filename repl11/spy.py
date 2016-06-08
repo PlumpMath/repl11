@@ -69,7 +69,14 @@ def modname_from_path(path):
         basemod = basename.split('.py')[0]
         parentname = reldir.replace(os.path.sep, '.')
         LOG.debug('parentname %r', parentname)
-        return parentname + basemod
+        modname = parentname + basemod
+        # don't create a fake module just because hasn't been
+        # imported yet
+        try:
+            __import__(modname)
+        except:
+            pass
+        return modname
     return filename
 
 def get_module(key):

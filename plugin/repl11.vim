@@ -96,6 +96,22 @@ function!R11Source()
     call R11Send('ex', 'import inspect; print inspect.getsource(' . obj . ')')
 endfunction
 
+function! R11Log()
+python<<EOF
+import vim, json, urllib
+try:
+    r11log_since
+except:
+    r11log_since = 0.0
+message = urllib.urlencode({'since': r11log_since})
+req = urllib.urlopen('http://127.0.0.1:8080/log?{0}'.format(message))
+records = json.loads(req.read())
+r11log_since = float(records[-1][0])
+for t, line in records:
+    print line
+EOF
+endfunction
+
 
 map <c-p> :echo g:r11out<CR>
 
@@ -108,6 +124,7 @@ map <c-k> :call R11Source()<cr><c-p>
 "map <c-w> :call R11Send('describe', 'whos')<cr><c-p>
 map <c-j> :call R11DescribeCword()<cr><c-p>
 
+map \rl :call R11Log()<cr>
 
 "map <F5> :w<CR>:call R11Send('ex', 'execfile("' . expand('%') . '", globals())')
 
