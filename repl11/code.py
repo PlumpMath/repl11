@@ -4,7 +4,13 @@ Code handling functions & classes.
 
 """
 
+import re
+import sys
 import ast
+import pprint
+import logging
+import traceback
+import cStringIO
 
 
 def dedent(source):
@@ -18,30 +24,18 @@ def dedent(source):
                 leftmostcol = start
     return '\n'.join([l[leftmostcol:] for l in lines])
 
-def syntax_mode(source):
-    "Evaluate mode of syntax for source"
-    mode = 'eval'
-    try:
-        ast.parse(source, mode=mode)
-    except SyntaxError:
-        mode = 'exec'
-        try:
-            ast.parse(source, mode=mode)
-        except SyntaxError as mode:
-            pass
-    return mode
-
 def assign_last(mod, key='_'):
     "Modify parsed module `mod` inline such that the last expression or "
     "assignment is also assigned to a variable named `key`."
     last = mod.body[-1]
-    us = [ast.Name(id=key, ctx=ast.Store())]
     if isinstance(last, ast.Expr):
-        last = ast.Assign(targets=us, value=last)
-    elif isinstance(last, ast.Assign):
-        last.targets = us + last.targets
-    mod.body[-1] = last
-    return mod
+        assigned = True
+        us = [ast.Name(id=key, ctx=ast.Store())]
+        last = ast.Assign(targets=us, value=last.value)
+        mod.body[-1] = last
+    else:
+        assigned = False
+    return mod, assigned
 
 
 class IOCapture(object):
@@ -58,8 +52,9 @@ class IOCapture(object):
 
     def __enter__(self):
         self.swap()
+        return self
 
-    def __exit__(self):
+    def __exit__(self, et, ev, tb):
         self.swap()
 
     @property
@@ -68,7 +63,7 @@ class IOCapture(object):
 
 
 class Code(object):
-    "Code sent that is somewhere in file in client"
+    "Handles a snippet of code from client that can be executed."
 
     nofile = '<no file>'
     noline = 0
@@ -78,39 +73,51 @@ class Code(object):
         self.source   = dedent(source)
         self.filename = filename
         self.lineno   = lineno
-        self.mode     = syntax_mode(source)
         self.log = logging.getLogger(repr(self))
 
         for i, line in enumerate(source.split('\n')):
             self.log.debug('%02d  %s', i, line)
-        self.log.debug('requires mode %r', self.mode)
 
-        if isinstance(self.mode, SyntaxError):
-            raise self.mode
-
-        self.mod  = assign_last(ast.parse(source), key=self.lastkey)
-        self.code = ast.fix_missing_locations(ast.parse(source))
-        self.code = ast.increment_lineno(self.code, n=self.lineno)
-        self.object = compile(self.code, self.filename, self.mode)
+        try:
+            self.mod = ast.parse(self.source)
+            self.mod, self.lastexpr = assign_last(self.mod, key=self.lastkey)
+            self.code = ast.fix_missing_locations(self.mod)
+            self.code = ast.increment_lineno(self.code, n=self.lineno)
+            self.log.debug(ast.dump(self.code))
+            self.obj = compile(self.code, self.filename, 'exec')
+        except Exception as exc:
+            self.log.warning('compilation failed: %r', exc)
+            self.obj = exc
 
     def __call__(self, namespace):
         "Run code in namespace"
 
-        co = self.object
-        ns = namespace.dict
-        pf = pprint.pformat
+        fail = lambda tb, exc: {'status'   : 'fail'
+                               ,'traceback': tb
+                               ,'result': exc
+                               }
 
-        if self.mode == 'eval':
-            return pf(eval(co, ns))
+        if isinstance(self.obj, Exception):
+            self.log.warning('compilation failure')
+            ret = fail([], self.obj)
 
         else:
-            with IOCapture() as io:
-                exec co in ns
-            return "%s\n%s" % (
-                    io.contents, 
-                    pf(ns[self.lastkey])
-                )
+            try:
+                with IOCapture() as io:
+                    exec self.obj in namespace
+                ret = {'status': 'ok'
+                      ,'out'   : io.contents
+                      ,'result': namespace[self.lastkey] 
+                                 if self.lastexpr else None
+                      }
 
+            except Exception as exc:
+                _, _, tb = sys.exc_info()
+                ret = fail(traceback.extract_tb(tb), exc)
+                self.log.debug(pprint.pformat(ret['traceback']))
+                self.log.warning('execution exception %r', exc)
+
+        return ret
 
 """
 

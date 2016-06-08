@@ -1,4 +1,6 @@
 
+import json
+import pprint
 import logging
 import urlparse
 
@@ -7,23 +9,25 @@ from BaseHTTPServer import (
         HTTPServer as Server
     )
 
-class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
+from . import code, ns
 
-    def __init__(self, *args, **kwds):
-        super(Handler, self).__init__(*args, **kwds)
-        self.log = logging.getLogger(repr(self))
+NS = ns.Namespaces()
 
-    def parse_request(self):
+class Handler(BaseHTTPRequestHandler):
+
+    log = logging.getLogger(__name__ + '.Handler')
+
+    def parse_path(self):
         self.log.debug('parsing path %r', self.path)
         request = urlparse.urlparse(self.path)
         query   = urlparse.parse_qs(request.query,
                     keep_blank_values=True, strict_parsing=True)
-        base = '_'.join(request.path[1:].split('/'))
+        target = '_'.join(request.path[1:].split('/'))
         self.log.debug('target=%r, query %r', target, query)
         return target, query
 
     def do_GET(self):
-        target, query = self.parse_request()
+        target, query = self.parse_path()
         method = getattr(self, 'do_' + target, None)
         if method:
             self.log.debug('GETing target method %r', method)
@@ -36,9 +40,16 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_ex(self, message=[], **kwds):
         src = message[0]
-        
+        # TODO namespace handling
+        reload(code)
+        reload(ns)
+        result = code.Code(src)(NS['default'])
+        if 'result' in result:
+            result['result'] = pprint.pformat(result['result'])
+        js = json.dumps(result)
+        self.log.debug('response: %r', js)
+        return js
 
-        return output
 
     def do_complete(self, message=[], **kwds):
         name = message[0]
@@ -46,19 +57,19 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             parts = name.split('.')
             base, name = '.'.join(parts[:-1]), parts[-1]
             try:
-                keys = dir(eval(base, globals()))
+                keys = dir(eval(base, NS['default']))
             except Exception as e:
                 LOG.info('completion failed %r', e)
                 return ''
             base += '.'
         else:
             base = ''
-            keys = globals().keys()
+            keys = NS['default'].keys()
         return ','.join('%s%s' % (base, k) for k in keys if k.startswith(name))
 
     def do_describe(self, message=[], **kwds):
         name = message[0]
-        g = globals()
+        g = NS['default']
         if name == 'whos':
             return '\n'.join('%-30s %s' % (k, type(g[k]))
                              for k in sorted(g.keys())

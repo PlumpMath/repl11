@@ -1,5 +1,5 @@
-hrepl
-=====
+repl11
+======
 
 This is simultaneously 
 
@@ -22,13 +22,13 @@ install
 
 Assuming you use Pathogen_, clone
 this under you bundles directory. Now the Vim client should work.
-Next, in your bundles/hrepl directory, run 
+Next, in your bundles/repl11 directory, run 
 ``python setup.py install --user`` to install the server.
 
 use
 ---
 
-Fire up the hrepl however you like, e.g.  ``python -m hrepl``
+Fire up the repl11 however you like, e.g.  ``python -m repl11``
 and open a Python file in Vim. ``<F9>`` sends the paragraph under
 the cursor, ``K`` gets documentation for ``<cword>``, etc. 
 ``<c-x><c-u>`` completes. Read

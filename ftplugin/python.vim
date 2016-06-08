@@ -1,48 +1,46 @@
 
 " TODO need to send current buffer name/file so that quickfixing
 " errors can take advantage
-function! HREPLSend(target, message)
+function! R11Send(target, message)
 python<<EOF
-import vim
-from urllib import urlopen, urlencode
+import vim, json, urllib
 target  = vim.eval('a:target')
 message = vim.eval('a:message')
-message = urlencode({'message': message})
-req = urlopen('http://127.0.0.1:8080/{0}?{1}'.format(target, message))
-resp = req.read()
-print resp
-if resp:
-    if 'Traceback (most recent call last)' in resp:
-        vim.command("let g:hreplqfl = []")
-        lines = resp.split('\n')[2:-1]
-        trace, exc = lines[:-1][::-1], lines[-1]
-        qf = []
-        for i, tr in enumerate(trace):
-            if i%2==0:
-                qf.append({'text': tr.strip()})
-            else:
-                f, l, m = [s.split(' ')[1] for s in tr.strip().split(', ')]
-                qf[-1]['filename'] = eval(f)
-                qf[-1]['lnum'] = l
-        for i, qfi in enumerate(qf):
-            qfis = ', '.join('%r: %r' % (k, v) for k, v in qfi.items())
-            vim.command('call add(g:hreplqfl, {%s})' % (qfis, ))
-        vim.command('call setqflist(g:hreplqfl)')
-    else:
-        pass
-        #vim.command("let g:hreplresp = %r" % (resp,))
+# TODO add current file name to spec namespace
+pars = {'message': message}
+message = urllib.urlencode(pars)
+req = urllib.urlopen('http://127.0.0.1:8080/{0}?{1}'.format(target, message))
+resp = json.loads(req.read())
+if resp['status'] in ('ok', 'fail'):
+    out = resp['out'].strip()
+    res = resp['result']
+    if res != 'None':
+        if out:
+            out += '\n'
+        out += res
+    if len(out) == 0:
+        out = resp['status']
+    vim.vars['r11out'] = out
+    #vim.command('let g:r11out = %r' % (out,))
+    if False:
+        vim.command('let g:r11qfl = []')
+        for filename, lineno, context, text in resp['traceback']:
+            vim.command('call add(g:r11qfl, %s)' % repr({
+                    'text'     : text,
+                    'filename' : filename,
+                    'lnum'     : lineno
+                }))
+        vim.command('call setqflist(g:r11qfl)')
 else:
-    pass
-    #vim.command("let g:hreplresp = %r" % ("ok",))
+    print 'unknown response status', resp['status']
 EOF
 endfunction
 
-
-function! HREPLDescribeCword()
-    call HREPLSend('describe', expand("<cword>"))
+function! R11DescribeCword()
+    call R11Send('describe', expand("<cword>"))
 endfunction
 
-function! HREPLComplete(findstart, base)
+function! R11Complete(findstart, base)
     if a:findstart
         " borrowed from ivanov/vim-ipython
         let line = getline('.')
@@ -63,9 +61,9 @@ return split(b:hrepl_resp, ',')
     endif
 endfunction
 
-setl completefunc=HREPLComplete
+setl completefunc=R11Complete
 
-function! HREPLCurrentObjectName()
+function! R11CurrentObjectName()
     " borrowed from ivanov/vim-ipython
     let line = getline('.')
     let start = col('.') - 1
@@ -79,17 +77,31 @@ function! HREPLCurrentObjectName()
     return strpart(line, start, endl)
 endfunction
 
-function!HREPLHelp()
-    let obj = HREPLCurrentObjectName()
-    call HREPLSend('ex', 'help(' . obj . ')')
+function!R11Help()
+    let obj = R11CurrentObjectName()
+    call R11Send('ex', 'help(' . obj . ')')
 endfunction
 
-function!HREPLSource()
-    let obj = HREPLCurrentObjectName()
-    call HREPLSend('ex', 'import inspect; print inspect.getsource(' . obj . ')')
+function!R11Source()
+    let obj = R11CurrentObjectName()
+    call R11Send('ex', 'import inspect; print inspect.getsource(' . obj . ')')
 endfunction
 
-vmap <F9> "ry:call HREPLSend('ex', @r)<CR>
-map K :call HREPLHelp()<CR>
-map <c-K> :call HREPLSource()<CR>
+
+
+map <c-p> :echo g:r11out<CR>
+
+vmap <c-s> "ry:call R11Send('ex', @r)<cr>
+nmap <c-s> mtvip<c-s>`t<c-p>
+imap <c-s> <esc><c-s>a
+
+map K :call R11Help()<cr><c-p>
+map <c-k> :call R11Source()<cr><c-p>
+"map <c-w> :call R11Send('describe', 'whos')<cr><c-p>
+map <c-j> :call R11DescribeCword()<cr><c-p>
+
+
+
+
+"map <F5> :w<CR>:call R11Send('ex', 'execfile("' . expand('%') . '", globals())')
 
