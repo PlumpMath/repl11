@@ -42,8 +42,8 @@ class Handler(BaseHTTPRequestHandler):
         self.log.debug('kwds %r', kwds)
         lineno = int(kwds['lineno'][0]) - 1
         filename = kwds['filename'][0]
-        self.log.debug('running in namespace %r', filename)
         mod = spy.module_from_path(filename)
+        self.log.debug('running in module %r', mod)
         result = code.Code(src, filename, lineno)(mod)
         if 'result' in result:
             result['result'] = pprint.pformat(result['result'])

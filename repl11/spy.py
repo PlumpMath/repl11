@@ -60,12 +60,17 @@ def modname_from_path(path):
             break
     if found:
         dirname = os.path.dirname(filename)
+        if not dirname.endswith(os.path.sep):
+            dirname += os.path.sep
+        LOG.debug('found %r for %r', apath, filename)
+        LOG.debug('dirname %r', dirname)
         reldir = dirname.split(apath + os.path.sep)[1]
         basename = os.path.basename(filename)
         basemod = basename.split('.py')[0]
-        return reldir.replace(os.path.sep, '.') + '.' + basemod
+        parentname = reldir.replace(os.path.sep, '.')
+        LOG.debug('parentname %r', parentname)
+        return parentname + basemod
     return filename
-
 
 def get_module(key):
     if key not in sys.modules:
@@ -79,3 +84,4 @@ def module_from_path(path):
     guess = modname_from_path(path)
     LOG.debug('guess modname %r from path %r', guess, path)
     return get_module(guess)
+
