@@ -53,6 +53,8 @@ recently implemented
 - logging now handling through http api, client can display as 
   desired, and interpreter can run in background, no terminal requried
 
+- start repl directly from vim, no terminal required
+
 missing
 -------
 
@@ -61,7 +63,6 @@ missing
 - embedding into running application
 - open definition, show source, etc.
 - repl config : which interpreter, pythonpath, cwd, venv etc. 
-- start repl from vim's python in subprocess
 - complete available modules
 
 - cover as much as possible with tests.. 
