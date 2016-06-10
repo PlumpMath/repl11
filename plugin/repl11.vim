@@ -115,7 +115,7 @@ endfunction
 function! R11Begin()
 python<<EOF
 import subprocess
-r11proc = subprocess.Popen(['python', '-m', 'repl11', '-v', '-p', '8080', '-l', 'pg'], 
+r11proc = subprocess.Popen(['python', '-m', 'repl11', '-v', '-s', '-p', '8080', '-l', 'pg'], 
 	stdout=subprocess.PIPE, 
 	stderr=subprocess.PIPE)
 EOF

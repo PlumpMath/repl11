@@ -21,6 +21,12 @@ verbosity.add_argument(
         action='store_true',
         help='Decrease verbosity (log level from INFO to WARNING)')
 
+verbosity.add_argument(
+        '-s',
+        '--stream',
+        action='store_true',
+        help='Log to internal stream, accessible by API')
+
 args, _ = parser.parse_known_args()
 
 if args.quiet:
@@ -32,7 +38,7 @@ else:
 
 from . import log
 
-log.setup_logging(loglevel)
+log.setup_logging(loglevel, stream=args.stream)
 
 LOG = logging.getLogger(__name__)
 LOG.info('logging system setup')

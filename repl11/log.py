@@ -26,8 +26,11 @@ class LogStream(object):
     def flush(self):
         pass
 
-def setup_logging(level):
-    stream = LogStream()
+def setup_logging(level, stream=False):
+    if stream:
+        stream = LogStream()
+    else:
+        del stream
     CFG.update(locals())
     logging.basicConfig(**CFG)
 
