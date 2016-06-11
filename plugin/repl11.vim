@@ -4,6 +4,8 @@
 function! R11Send(target, message)
 python<<EOF
 import vim, json, urllib
+port = vim.vars['r11port'] if 'r11port' in vim.vars else '8080'
+print port
 target  = vim.eval('a:target')
 message = vim.eval('a:message')
 row, col = vim.current.window.cursor
@@ -12,7 +14,7 @@ pars = {'message': message
        ,'lineno': row
        }
 message = urllib.urlencode(pars)
-req = urllib.urlopen('http://127.0.0.1:8080/{0}?{1}'.format(target, message))
+req = urllib.urlopen('http://127.0.0.1:{2}/{0}?{1}'.format(target, message, port))
 resp = json.loads(req.read())
 if resp['status'] in ('ok', 'fail'):
     out = resp['out'].strip()
@@ -58,12 +60,13 @@ function! R11Complete(findstart, base)
     else
 python<<EOF
 import vim
+port = vim.vars['r11port'] if 'r11port' in vim.vars else '8080'
 from urllib import urlopen, urlencode
 message = urlencode(
     {'message': vim.eval('a:base')
     ,'filename': vim.eval("expand('%:p')") # to know which namespace
     })
-req = urlopen('http://127.0.0.1:8080/complete?{0}'.format(message))
+req = urlopen('http://127.0.0.1:{1}/complete?{0}'.format(message, port))
 vim.command('let b:hrepl_resp = %r' % (req.read().strip(), ))
 EOF
 return split(b:hrepl_resp, ',')
@@ -99,12 +102,13 @@ endfunction
 function! R11Log()
 python<<EOF
 import vim, json, urllib
+port = vim.vars['r11port'] if 'r11port' in vim.vars else '8080'
 try:
     r11log_since
 except:
     r11log_since = 0.0
 message = urllib.urlencode({'since': r11log_since})
-req = urllib.urlopen('http://127.0.0.1:8080/log?{0}'.format(message))
+req = urllib.urlopen('http://127.0.0.1:{1}/log?{0}'.format(message, port))
 records = json.loads(req.read())
 r11log_since = float(records[-1][0])
 for t, line in records:
@@ -112,10 +116,17 @@ for t, line in records:
 EOF
 endfunction
 
-function! R11Begin()
+function! R11Begin(...)
 python<<EOF
+import vim
+narg = int(vim.eval('a:0'))
+if narg > 0:
+    port = vim.eval('a:1')
+else:
+    port = '8080'
+vim.vars['r11port'] = port
 import subprocess
-r11proc = subprocess.Popen(['python', '-m', 'repl11', '-v', '-s', '-p', '8080', '-l', 'pg'], 
+r11proc = subprocess.Popen(['python', '-m', 'repl11', '-v', '-s', '-p', port, '-l', 'pg'], 
 	stdout=subprocess.PIPE, 
 	stderr=subprocess.PIPE)
 EOF
