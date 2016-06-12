@@ -96,6 +96,14 @@ function!R11Source()
     call R11Send('ex', 'import inspect; print inspect.getsource(' . obj . ')')
 endfunction
 
+function!R11EditSource()
+    let obj = R11CurrentObjectName()
+    call R11Send('ex', 'import inspect; print "%s:%s" % (inspect.getsourcefile(' . obj . '), inspect.findsource(' . obj . ')[1]+1)')
+    let parts = split(g:r11out, ':')
+    exe 'e ' . parts[0]
+    exe ':' . parts[1]
+endfunction
+
 function! R11Log()
 python<<EOF
 import vim, json, urllib
@@ -155,6 +163,8 @@ map \rb :call R11Begin()<cr>
 map \re :call R11End()<cr>
 map \rs :call R11Status()<cr>
 map \rr \re\rb
+
+map \rd :call R11EditSource()<cr>
 
 "map <F5> :w<CR>:call R11Send('ex', 'execfile("' . expand('%') . '", globals())')
 

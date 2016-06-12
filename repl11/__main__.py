@@ -21,7 +21,7 @@ verbosity.add_argument(
         action='store_true',
         help='Decrease verbosity (log level from INFO to WARNING)')
 
-verbosity.add_argument(
+parser.add_argument(
         '-s',
         '--stream',
         action='store_true',

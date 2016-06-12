@@ -53,7 +53,9 @@ recently implemented
 - logging now handling through http api, client can display as 
   desired, and interpreter can run in background, no terminal requried
 
-- start repl directly from vim, no terminal required
+- start repl directly from vim, no terminal required (`\rb` & `\re`)
+
+- rudimentary jump to source using Python's inspect (`\rd`)
 
 missing
 -------
@@ -90,6 +92,9 @@ missing
 - snapshot stacks static (traceback.extract_stack) and dynamically?
 - hybrid debugging: stack with locals' reprs. 
 - keep tag list updated with modules, functions, etc. 
+
+- asynch execution for long running tasks?
+
 
 
 
