@@ -5,7 +5,6 @@ function! R11Send(target, message)
 python<<EOF
 import vim, json, urllib
 port = vim.vars['r11port'] if 'r11port' in vim.vars else '8080'
-print port
 target  = vim.eval('a:target')
 message = vim.eval('a:message')
 row, col = vim.current.window.cursor
@@ -14,6 +13,7 @@ pars = {'message': message
        ,'lineno': row
        }
 message = urllib.urlencode(pars)
+print 'waiting...'
 req = urllib.urlopen('http://127.0.0.1:{2}/{0}?{1}'.format(target, message, port))
 resp = json.loads(req.read())
 if resp['status'] in ('ok', 'fail'):
@@ -163,6 +163,10 @@ map <c-p> :echo g:r11out<CR>
 vmap <c-s> "ry:call R11Send('ex', @r)<cr>
 nmap <c-s> mtvip<c-s>`t<c-p>
 imap <c-s> <esc><c-s>
+
+vmap <F9> <c-s>
+nmap <F9> <c-s>
+imap <F9> <c-s>
 
 map K :call R11Help()<cr><c-p>
 map <c-k> :call R11Source()<cr><c-p>

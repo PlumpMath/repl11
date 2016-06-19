@@ -72,11 +72,13 @@ def modname_from_path(path):
         modname = parentname + basemod
         # don't create a fake module just because hasn't been
         # imported yet
+        """
         try:
             LOG.debug('preemptively importing module %r', modname)
             __import__(modname)
         except:
             pass
+        """
         return modname
     return filename
 
