@@ -1,6 +1,7 @@
 
 "Logging stuff"
 
+import sys
 import time
 import logging
 
@@ -28,7 +29,7 @@ class LogStream(object):
 
 def setup_logging(level, stream=False):
     if stream:
-        stream = LogStream()
+        stream = sys.stdout = sys.stderr = LogStream()
     else:
         del stream
     CFG.update(locals())
