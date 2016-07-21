@@ -67,7 +67,7 @@ class Code(object):
 
     nofile = '<no file>'
     noline = 0
-    lastkey = '_'
+    lastkey = '__last__'
 
     def __init__(self, source, filename=nofile, lineno=noline):
         self.source   = dedent(source)
