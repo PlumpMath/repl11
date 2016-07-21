@@ -24,7 +24,7 @@ def dedent(source):
                 leftmostcol = start
     return '\n'.join([l[leftmostcol:] for l in lines])
 
-def assign_last(mod, key='_'):
+def assign_last(mod, key='__last__'):
     "Modify parsed module `mod` inline such that the last expression or "
     "assignment is also assigned to a variable named `key`."
     last = mod.body[-1]
