@@ -126,17 +126,20 @@ endfunction
 
 function! R11Begin(...)
 python<<EOF
-import vim
-narg = int(vim.eval('a:0'))
-if narg > 0:
-    port = vim.eval('a:1')
-else:
-    port = '8080'
-vim.vars['r11port'] = port
-import subprocess
-r11proc = subprocess.Popen(['python', '-m', 'repl11', '-v', '-s', '-p', port, '-l', 'pg'], 
-	stdout=subprocess.PIPE, 
-	stderr=subprocess.PIPE)
+try:
+    r11proc
+except:
+    import vim
+    narg = int(vim.eval('a:0'))
+    if narg > 0:
+        port = vim.eval('a:1')
+    else:
+        port = '8080'
+    vim.vars['r11port'] = port
+    import subprocess
+    r11proc = subprocess.Popen(['python', '-m', 'repl11', '-v', '-s', '-p', port, '-l', 'pg'], 
+    	stdout=subprocess.PIPE, 
+    	stderr=subprocess.PIPE)
 EOF
 endfunction
 
