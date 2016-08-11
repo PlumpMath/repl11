@@ -14,9 +14,6 @@ even when not using IPython/ZMQ (bye vim-ipython_).
 This is currently specific to Vim and Python, but in principle can be
 extended to any combination of server & client.
 
-By the way, if you're missing a good terminal and tmux on Windows, you're
-missing out on ConEmu_.
-
 install
 -------
 
@@ -33,6 +30,24 @@ and open a Python file in Vim. ``<F9>`` sends the paragraph under
 the cursor, ``K`` gets documentation for ``<cword>``, etc. 
 ``<c-x><c-u>`` completes. Read
 ``ftplugin/python.vim`` to see what's up. (Re)map according to taste.
+
+why not just ipython?
+---------------------
+
+Using ipython as an IDE has its limits: making coordinated changes 
+across modules requires redundant reloading of all modules and perhaps
+dependencies thereof. Without a robust deep, automatic reloading
+facility, this is problematic. In repl11, evaluation occurs in the 
+module's namespace directly, so changes take effect immediately, with
+the exception that existing objects are not updated.
+
+Using IPython also forces a decoupling between serious code editing
+and interactive testing. With repl11 there is no discontinuity
+between the two.
+
+For the moment, debugging is the part where repl11 is not so good: 
+stack traces are mapped to Vim's quickfixlist but that's all, and 
+one has to pass to (i)pdb or IDLE to get better support.
 
 recently implemented
 --------------------
@@ -88,6 +103,7 @@ missing
 - optional repl manager: controls subprocesses so crash doesn't knock out
   server, and server runs independently. need to build basic server first
 
+- use fork to quickly boot new repls with scipy/numpy deps already imported
 
 - snapshot stacks static (traceback.extract_stack) and dynamically?
 - hybrid debugging: stack with locals' reprs. 
