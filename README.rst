@@ -39,11 +39,13 @@ across modules requires redundant reloading of all modules and perhaps
 dependencies thereof. Without a robust deep, automatic reloading
 facility, this is problematic. In repl11, evaluation occurs in the 
 module's namespace directly, so changes take effect immediately, with
-the exception that existing objects are not updated.
+the exception that existing objects are not updated, which is a bug 
+or a feature as you see it.
 
-Using IPython also forces a decoupling between serious code editing
+Using IPython also tends to a decoupling between serious code editing
 and interactive testing. With repl11 there is no discontinuity
-between the two.
+between the two, as you use your (my) favorite editor (vim) (for the
+moment).
 
 For the moment, debugging is the part where repl11 is not so good: 
 stack traces are mapped to Vim's quickfixlist but that's all, and 
@@ -61,19 +63,22 @@ recently implemented
 - exec performed on a per-file module basis: where a filename has a 
   mapping to a Python module (for the running interpreter), the existing
   module is used, otherwise a fake module is created. This allows live
-  updating of modules attributes
+  updating of modules attributes. There are some module related issues
+  to work out.
 
-- auto dedent makes it easier to write & test code in indented blocks
+- auto dedent makes it easier to write & test code in indented blocks, 
+  and perhaps in rst as well while writing sphinx documentation.
 
 - logging now handling through http api, client can display as 
   desired, and interpreter can run in background, no terminal requried
+  (though it's rather crude ftm).
 
 - start repl directly from vim, no terminal required (`\rb` & `\re`)
 
 - rudimentary jump to source using Python's inspect (`\rd`)
 
-missing
--------
+wish list & navel gazing
+------------------------
 
 - visual debugging
 - line profiling blocks of code (get wrapped in @profiled defs)
@@ -81,10 +86,12 @@ missing
 - open definition, show source, etc.
 - repl config : which interpreter, pythonpath, cwd, venv etc. 
 - complete available modules
+- find any object in running process, filter for specific class,
+  poke object, etc.
 
 - cover as much as possible with tests.. 
 - monkey patching methods & functions: find class and objects, ... 
-- implement js/codemirror & vim clients as demos
+- implement js/codemirror & vim clients as demos (?)
 - read pdb sources to see how to set trace, etc. 
 - subexpression profiling
 - writing at class level in coordination with tests: for given
@@ -109,9 +116,24 @@ missing
 - hybrid debugging: stack with locals' reprs. 
 - keep tag list updated with modules, functions, etc. 
 
-- asynch execution for long running tasks?
+- asynch execution for long running tasks? Q: how to let user handle it
+  should they specify not to wait then check up on status later?
+- running different code blocks in different threads or processes?
+- debug stack traces backwards, "time traveling debugger", called tardis
 
+- add event loops for other systems like gl, plain qt, wx, bla bla
 
+- python 3 has a new async i/o library which may or may not be interesting
+  for a rewrite of the servers, etc. 
+
+- open up a bit the interactions: kernels implement set of apis that mimick
+  what usually do at repl, like entering text, eval in namespace, completion
+  etc. 
+
+- have a popup window in vim listing status of currently known repls; perhaps
+  require some central file that lists these e.g. hostname / time / port / etc
+
+- 
 
 
 .. _tmux: http://tmux.sourceforge.net
