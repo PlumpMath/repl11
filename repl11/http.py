@@ -72,20 +72,30 @@ class Handler(BaseHTTPRequestHandler):
         return ','.join('%s%s' % (base, k) for k in keys if k.startswith(name))
 
     def do_describe(self, message=[], **kwds):
+        def describe(obj):
+            if 'ndarray' in type(obj).__name__:
+                desc = '%s %r' % (obj.dtype.name, obj.shape)
+            else:
+                desc = repr(obj)[:80]
+            return desc
         name = message[0]
+        filename = kwds['filename'][0]
         g = spy.module_from_path(filename).__dict__
         if name == 'whos':
-            return '\n'.join('%-30s %s' % (k, type(g[k]))
+            desc = '\n'.join('%-30s %s' % (k, describe(g[k]))
                              for k in sorted(g.keys())
                              if not k.startswith('_'))
-        if name not in g:
-            return ''
-        obj = g[name]
-        #if isinstance(obj, numpy.ndarray):
-        if 'ndarray' in type(obj).__name__:
-            return '%s %r' % (obj.dtype.name, obj.shape)
+        elif name not in g:
+            desc = ''
         else:
-            return repr(obj)[:80]
+            desc = describe(g[name])
+            #if isinstance(obj, numpy.ndarray):
+        return json.dumps({
+            'status': 'ok',
+            'out': desc,
+            'result': 'None'
+            })
+
 
     def do_log(self, since=[], **kwds):
         "Retrieve log contents"

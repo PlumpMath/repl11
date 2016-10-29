@@ -15,32 +15,36 @@ pars = {'message': message
 message = urllib.urlencode(pars)
 print 'waiting...'
 req = urllib.urlopen('http://127.0.0.1:{2}/{0}?{1}'.format(target, message, port))
-resp = json.loads(req.read())
-if resp['status'] in ('ok', 'fail'):
-    out = resp['out'].strip()
-    res = resp['result']
-    if res != 'None':
-        if out:
-            out += '\n'
-        out += res
-    if len(out) == 0:
-        out = resp['status']
-    vim.vars['r11out'] = out
-    #vim.command('let g:r11out = %r' % (out,))
-    if resp['status'] == 'fail':
-	qfl = []
-        for filename, lineno, context, text in resp['traceback']:
-	    if filename.endswith('repl11/code.py'):
-		continue
-	    qfl.append({
-	        'text'     : text or '',
-	        'filename' : filename,
-	        'lnum'     : lineno
-	    })
-        vim.vars['r11qfl'] = vim.List(qfl)
-        vim.command('call setqflist(g:r11qfl)')
-else:
-    print 'unknown response status', resp['status']
+try:
+    txt = req.read()
+    resp = json.loads(txt)
+    if resp['status'] in ('ok', 'fail'):
+        out = resp['out'].strip()
+        res = resp['result']
+        if res != 'None':
+            if out:
+                out += '\n'
+            out += res
+        if len(out) == 0:
+            out = resp['status']
+        vim.vars['r11out'] = out
+        #vim.command('let g:r11out = %r' % (out,))
+        if resp['status'] == 'fail':
+            qfl = []
+            for filename, lineno, context, text in resp['traceback']:
+                if filename.endswith('repl11/code.py'):
+                    continue
+                    qfl.append({
+                        'text'     : text or '',
+                        'filename' : filename,
+                        'lnum'     : lineno
+                    })
+            vim.vars['r11qfl'] = vim.List(qfl)
+            vim.command('call setqflist(g:r11qfl)')
+    else:
+        print 'unknown response status', resp['status']
+except Exception as exc:
+    vim.vars['r11out'] = 'unknown response: %r' % (txt, )
 EOF
 endfunction
 
@@ -73,7 +77,7 @@ return split(b:hrepl_resp, ',')
     endif
 endfunction
 
-setl completefunc=R11Complete
+set completefunc=R11Complete
 
 function! R11CurrentObjectName()
     " borrowed from ivanov/vim-ipython
@@ -129,6 +133,14 @@ python<<EOF
 try:
     r11proc
 except:
+    import atexit
+    r11proc = None
+    @atexit.register
+    def r11prockill():
+        if r11proc is not None:
+            r11proc.terminate()
+
+if r11proc is None:
     import vim
     narg = int(vim.eval('a:0'))
     if narg > 0:
@@ -137,19 +149,29 @@ except:
         port = '8080'
     vim.vars['r11port'] = port
     import subprocess
-    r11proc = subprocess.Popen(['python', '-m', 'repl11', '-v', '-s', '-p', port, '-l', 'pg'], 
+    cmd = ['python', '-m', 'repl11', '-v', '-s', '-p', port, '-l', 'pg']
+    r11proc = subprocess.Popen(cmd, 
     	stdout=subprocess.PIPE, 
     	stderr=subprocess.PIPE)
+    print ('started', ' '.join(cmd))
+else:
+    print ('r11proc already running, \\rr to restart')
 EOF
 endfunction
 
 function! R11End()
 python<<EOF
-try:
-    r11proc.terminate()
-except:
-    pass
-
+if r11proc is not None:
+    try:
+        r11proc.terminate()
+        r11proc.wait()
+    except Exception as exc:
+        print ('failed to end r11proc: ', exc)
+    finally:
+        r11proc = None
+	print ('r11proc killed!')
+else:
+    print ('no r11proc to end')
 EOF
 endfunction
 
@@ -161,20 +183,17 @@ if r11proc.poll():
 EOF
 endfunction
 
-map <c-p> :echo g:r11out<CR>
+" 0__o
+map \r1o :echo g:r11out<CR>
 
 vmap <c-s> "ry:call R11Send('ex', @r)<cr>
-nmap <c-s> mtvip<c-s>`t<c-p>
+nmap <c-s> mtvip<c-s>`t\r1o
 imap <c-s> <esc><c-s>
 
-vmap <F9> <c-s>
-nmap <F9> <c-s>
-imap <F9> <c-s>
-
-map K :call R11Help()<cr><c-p>
-map <c-k> :call R11Source()<cr><c-p>
-"map <c-w> :call R11Send('describe', 'whos')<cr><c-p>
-map <c-j> :call R11DescribeCword()<cr><c-p>
+map K :call R11Help()<cr>\r1o
+map <c-k> :call R11Source()<cr>\r1o
+map \r1w :call R11Send('describe', 'whos')<cr>\r1o
+map <c-j> :call R11DescribeCword()<cr>\r1o
 
 map \rl :call R11Log()<cr>
 map \rb :call R11Begin()<cr>
@@ -185,4 +204,3 @@ map \rr \re\rb
 map \rd :call R11EditSource()<cr>
 
 "map <F5> :w<CR>:call R11Send('ex', 'execfile("' . expand('%') . '", globals())')
-
